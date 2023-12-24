@@ -43,7 +43,7 @@ const createContact = async (req, res) => {
         const emptyFields = ourFields.filter(field => !req.body[field]);
 
         if (emptyFields.length > 0) {
-            return res.status(400).json({ message: `Missing required fields` });
+            return res.status(400).json({ message: `Missing required ${emptyFields} field` });
         }
 
         const { error } = schema.validate(req.body);
@@ -69,23 +69,23 @@ const changeContact = async (req, res) => {
     try {
         const requiredFields = ['name', 'email', 'phone']; 
 
-        const missingFields = requiredFields.filter(field => !req.body[field]);
+        const missingFields = requiredFields.filter(field => !req.body || !req.body[field]);
+
+        if (!req.body || missingFields.length === requiredFields.length) {
+            return res.status(400).json({ message: `Missing fields` });
+        }
 
         if (missingFields.length > 0) {
-            return res.status(400).json({ message: `Missing fields` });
+            return res.status(400).json({ message: `Missing required ${missingFields} field` });
         }
 
         const { contactId } = req.params;
         const { error } = schema.validate(req.body);
 
         if (error) {
-            const errors = error.details.map(detail => ({
-                field: detail.path[0],
-                message: detail.message
-            }));
-
-            return res.status(404).json({ message: 'Not found', errors });
+            return res.status(404).json({ message: 'Existing value must be a string' });
         }
+
         const { name, email, phone } = req.body;
         const updatedContact = await updateContact(contactId, { name, email, phone });
 
