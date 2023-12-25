@@ -32,7 +32,7 @@ const getContactsById = async (req, res) => {
             ? res.status(200).json(contactById)
             : res.status(404).json({ message: "Not found" });
     } catch (error) {
-        res.status(500).json({ message: `${error.message}` });
+        res.status(404).json({ message: `Not found` });
     }
 };
 
@@ -48,12 +48,7 @@ const createContact = async (req, res) => {
 
         const { error } = schema.validate(req.body);
         if (error) {
-            const errors = error.details.map(detail => ({
-                field: detail.path[0],
-                message: detail.message
-            }));
-
-            return res.status(404).json({ message: 'Not found', errors });
+            return res.status(404).json({ message: 'Existing value must be a string' });
         }
 
         const { name, email, phone } = req.body;
