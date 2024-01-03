@@ -4,13 +4,13 @@ const mongoose = require("mongoose");
 const { DB_HOST } = require("./config");
 mongoose.set('strictQuery', true);
 
-mongoose.connect(DB_HOST)
+mongoose
+  .connect(DB_HOST)
   .then(() => {
-    app.listen(3000, () => {
-      console.log("Database connection successful")
-    })
-      .catch(error => {
-        console.log(error.message);
-        process.exit(1);
-      })
+    console.log("Database connection successful");
+    app.listen(3000); 
+  })
+  .catch((error) => {
+    console.log(error.message);
+    process.exit(1);
   });
