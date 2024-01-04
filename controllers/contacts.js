@@ -3,85 +3,130 @@ const {
     addSchema,
 } = require("../models/contact");
 
-const { HttpError } = require("../helpers");
-const ctrlWrapper = require("../helpers/ctrlWrapper");
-
 const listContacts = async (req, res) => {
-    const result = await Contact.find();
-    res.status(200).json(result);
+    try {
+        const contacts = await Contact.find();
+        res.status(200).json(contacts);
+    } catch (error) {
+        res.status(500).json({ message: `${error.message} ` });
+    }
 };
 
 const getById = async (req, res) => {
-    const { contactId } = req.params;
-    const contactById = await Contact.findById(contactId);
+    try {
+        const { contactId } = req.params;
+        const contactById = await Contact.findById(contactId);
 
-    if (!contactById) {
-        throw HttpError(404, "Not found");
+        contactById.length !== 0
+            ? res.status(200).json(contactById)
+            : res.status(404).json({ message: "Not found" });
+    } catch (error) {
+        res.status(404).json({ message: "Not found" });
     }
-    res.status(200).json(contactById);
 };
 
 const addContact = async (req, res) => {
-    const { error } = addSchema.validate(req.body);
-    if (error) {
-        return res.status(400).json({ message: 'Missing required field' });
+    try {
+        const ourFields = ['name', 'email', 'phone'];
+        const emptyFields = ourFields.filter(field => !req.body[field]);
+
+        if (emptyFields.length > 0) {
+            return res.status(400).json({ message: `Missing required ${emptyFields} field` });
+        }
+
+        const { error } = addSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ message: "Existing value must be a string" });
+        }
+
+        const { name, email, phone, favorite } = req.body;
+        const newContact = await Contact.create({ name, email, phone, favorite });
+
+        res.status(201).json(newContact);
+    } catch (error) {
+        res.status(500).json({ message: `${error.message}` });
     }
-
-    const newContact = await Contact.create(req.body);
-
-    res.status(201).json(newContact);
 };
 
 const updateById = async (req, res) => {
-    const { error } = addSchema.validate(req.body);
-     if (error) {
-        throw HttpError(400, `Missing required field`);
-    }
-    
-    const { contactId } = req.params;
-    const updatedContact = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
+    try {
+        const requiredFields = ['name', 'email', 'phone'];
+        const missingFields = requiredFields.filter(field => !req.body || !req.body[field]);
 
-    if (!updatedContact) {
-        throw HttpError(404, "Not found");
+        if (!req.body || missingFields.length === requiredFields.length) {
+            return res.status(400).json({ message: "Missing fields" });
+        }
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({ message: `Missing required ${missingFields} field` });
+        }
+
+        const { contactId } = req.params;
+        const { error } = addSchema.validate(req.body);
+
+        if (error) {
+            return res.status(400).json({ message: "Existing value must be a string" });
+        }
+
+        const { name, email, phone } = req.body;
+        const updatedContact = await Contact.findByIdAndUpdate(contactId, { name, email, phone }, { new: true });
+
+        if (!updatedContact) {
+            return res.status(404).json({ message: "Not found" });
+        }
+        res.status(200).json(updatedContact);
+    } catch (error) {
+        res.status(404).json({ message: "Not found" });
     }
-    res.status(200).json(updatedContact);
 };
 
 const updateStatusContact = async (req, res) => {
-  const { error } = addSchema.validate(req.body);
-  if (error) {
-    throw HttpError(400, "Missing fields");
-  }
-    const { contactId } = req.params;
-    const { favorite } = req.body;
+    try {
+        const requiredFields = ['name', 'email', 'phone', 'favorite'];
+        const missingFields = requiredFields.filter(field => !req.body || !req.body[field]);
 
-    if (favorite === null) {
-        throw HttpError(400, "Missing field favorite");
+        if (!req.body || missingFields.length === requiredFields.length) {
+            return res.status(400).json({ message: "Missing field favorite" });
+        }
+
+        const { contactId } = req.params;
+        const { error } = addSchema.validate(req.body);
+
+        if (error) {
+            return res.status(404).json({ message: "Existing value must be a string" });
+        }
+
+        const result = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
+        if (!result) {
+            return res.status(404).json({ message: "Not found" });
+        }
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(404).json({ message: "Not found" });
     }
-
-  const result = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
-  if (!result) {
-    throw HttpError(404, "Not found");
-  }
-  res.status(200).json(result);
 };
 
 const removeContact = async (req, res) => {
-    const { contactId } = req.params;
-    const deleted = await Contact.findByIdAndDelete(contactId);
+    try {
+        const { contactId } = req.params;
+        const deleted = await Contact.findByIdAndDelete(contactId);
 
-    if (!deleted) {
-        throw HttpError(404, "Not found");
+        if (deleted) {
+            res.status(200).json({ message: "Contact deleted" });
+        } else {
+            res.status(404).json({ message: "Not found" });
+        }
+    } catch (error) {
+        res.status(404).json({ message: "Not found" });
     }
-    res.status(200).json({ message: "Contact deleted" });
 };
 
 
 module.exports = {
-    listContacts: ctrlWrapper(listContacts),
-    getById: ctrlWrapper(getById),
-    addContact: ctrlWrapper(addContact),
-    updateById: ctrlWrapper(updateById),
-    updateStatusContact: ctrlWrapper(updateStatusContact),
-    removeContact: ctrlWrapper(removeContact),
+    listContacts,
+    getById,
+    addContact,
+    updateById,
+    updateStatusContact,
+    removeContact,
 };
