@@ -1,6 +1,7 @@
 const {
     Contact,
     addSchema,
+    favoriteSchema,
 } = require("../models/contact");
 
 const listContacts = async (req, res) => {
@@ -82,20 +83,16 @@ const updateById = async (req, res) => {
 
 const updateStatusContact = async (req, res) => {
     try {
-        const requiredFields = ['name', 'email', 'phone', 'favorite'];
-        const missingFields = requiredFields.filter(field => !req.body || !req.body[field]);
-
-        if (!req.body || missingFields.length === requiredFields.length) {
+        if (!req.body || req.body.favorite === undefined) {
             return res.status(400).json({ message: "Missing field favorite" });
         }
 
-        const { contactId } = req.params;
-        const { error } = addSchema.validate(req.body);
-
+        const { error } = favoriteSchema.validate(req.body);
         if (error) {
-            return res.status(404).json({ message: "Existing value must be a string" });
+            return res.status(400).json({ message: "Existing value must be a boolean" });
         }
 
+        const { contactId } = req.params;
         const result = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
         if (!result) {
             return res.status(404).json({ message: "Not found" });

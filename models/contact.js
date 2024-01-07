@@ -32,7 +32,12 @@ const addSchema = Joi.object({
     favorite: Joi.boolean(),
 });
 
+const favoriteSchema = Joi.object({
+    favorite: Joi.boolean(),
+});
+
 module.exports = {
     Contact,
     addSchema,
+    favoriteSchema,
 };
