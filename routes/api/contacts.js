@@ -9,15 +9,15 @@ const isValidId = require("../../middlewares");
 
 router.get('/', ctrl.listContacts);
 
-router.get('/:contactId', ctrl.getById);
+router.get('/:contactId', isValidId, ctrl.getById);
 
 router.post('/', ctrl.addContact);
 
-router.put('/:contactId', ctrl.updateById); 
+router.put('/:contactId', isValidId, ctrl.updateById); 
 
 router.patch('/:contactId/favorite', isValidId, ctrl.updateStatusContact);
 
-router.delete('/:contactId', ctrl.removeContact); 
+router.delete('/:contactId', isValidId, ctrl.removeContact); 
 
 
 module.exports = router;
