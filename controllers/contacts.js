@@ -6,7 +6,8 @@ const {
 
 const listContacts = async (req, res) => {
     try {
-        const contacts = await Contact.find();
+        const { _id: owner } = req.user;
+        const contacts = await Contact.find({owner}, "-createdAt -updatedAt");
         res.status(200).json(contacts);
     } catch (error) {
         res.status(500).json({ message: `${error.message} ` });
@@ -40,8 +41,8 @@ const addContact = async (req, res) => {
             return res.status(400).json({ message: "Existing value must be a string" });
         }
 
-        const { name, email, phone, favorite } = req.body;
-        const newContact = await Contact.create({ name, email, phone, favorite });
+        const { _id: owner } = req.user;
+        const newContact = await Contact.create({ ...req.body, owner });
 
         res.status(201).json(newContact);
     } catch (error) {
