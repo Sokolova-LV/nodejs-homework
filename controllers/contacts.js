@@ -7,12 +7,54 @@ const {
 const listContacts = async (req, res) => {
     try {
         const { _id: owner } = req.user;
-        const contacts = await Contact.find({owner}, "-createdAt -updatedAt");
+        const { page = 1, limit = 20, contactId } = req.query;
+        const skip = (page - 1) * limit;
+
+        const searchUser = { owner };
+
+        if (contactId) {
+            searchUser._id = contactId; 
+        }
+
+        const contacts = await Contact.find(searchUser, "-createdAt -updatedAt", {
+            skip,
+            limit,
+        }).populate("owner", "email");
+
         res.status(200).json(contacts);
     } catch (error) {
         res.status(500).json({ message: `${error.message} ` });
     }
 };
+
+
+/* const listContacts = async (req, res) => {
+    try {
+        const { _id: owner } = req.user;
+        const searchUser = {
+            owner,
+        };
+
+        const { page = 1, limit = 20, favorite } = req.query;
+        const skip = (page - 1) * limit;
+
+        if (typeof favorite === "undefined") {
+            delete searchUser.favorite;
+        } else {
+            searchUser.favorite = favorite;
+        }
+
+        const contacts = await Contact.find(searchUser, "-createdAt -updatedAt", {
+            skip,
+            limit,
+        }).populate("owner", "email");
+
+        // const contacts = await Contact.find({owner}, "-createdAt -updatedAt").populate("owner", "email");
+        res.status(200).json(contacts);
+    } catch (error) {
+        res.status(500).json({ message: `${error.message} ` });
+    }
+}; */
 
 const getById = async (req, res) => {
     try {
