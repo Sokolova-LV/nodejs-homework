@@ -14,20 +14,16 @@ const authenticate = async (req, res, next) => {
         const { id } = jwt.verify(token, SECRET_KEY);
         const user = await User.findById(id);
 
-        /* if (!user || !user.token || user.token !== token) {
+        if (!user || !user.token || user.token !== token) {
             return res.status(401).json({ message: "Not authorized. Second" });
-        } */
-
-        if (!user || typeof user.token === 'undefined' || user.token === null) {
-            return res.status(401).json({ message: "Not authorized. Second" });
-        }
+        } 
 
         req.user = user;
         next();
     }
-    catch {
+    catch (error) {
         return res.status(401).json({ message: "Not authorized. Third" });
-    } 
+    }
 };
 
 module.exports = authenticate;

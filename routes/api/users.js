@@ -32,9 +32,9 @@ router.post("/login", async (req, res, next) => {
 }, login);
 
 
-router.get("/current", authenticate, getCurrent);
-
 router.post("/logout", authenticate, logout);
+
+router.get("/current", authenticate, getCurrent);
 
 
 module.exports = router;

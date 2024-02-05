@@ -29,10 +29,13 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+
     if (!user) {
         return res.status(401).json({ message: "Email or password is wrong" });
     }
+
     const passwordCompare = await bcrypt.compare(password, user.password);
+
     if (!passwordCompare) {
         return res.status(401).json({ message: "Email or password is wrong" });
     }
@@ -42,6 +45,8 @@ const login = async (req, res) => {
     }   
 
     const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "23h" });
+
+    await User.findByIdAndUpdate(user._id, { token });
 
     res.status(200).json({
         token,
@@ -66,8 +71,7 @@ const logout = async (req, res) => {
     await User.findByIdAndUpdate(_id, { token: "" });
 
     res.status(204).json();
-};
-
+}; 
 
 
 module.exports = {
