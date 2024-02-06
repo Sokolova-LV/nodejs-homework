@@ -31,7 +31,7 @@ const listContacts = async (req, res) => {
     }
 }; 
 
-const getById = async (req, res) => {
+/* const getById = async (req, res) => {
     try {
         const { contactId } = req.params;
         const contactById = await Contact.findById(contactId);
@@ -42,7 +42,27 @@ const getById = async (req, res) => {
     } catch (error) {
         res.status(404).json({ message: "Not found" });
     }
+}; */
+
+const getById = async (req, res) => {
+    try {
+        const { contactId } = req.params;
+        const contactById = await Contact.findById(contactId);
+
+        if (!contactById) {
+            return res.status(404).json({ message: "Not found" });
+        }
+
+        if (contactById.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Unauthorized access" });
+        }
+
+        res.status(200).json(contactById);
+    } catch (error) {
+        res.status(404).json({ message: "Not found" });
+    }
 };
+
 
 const addContact = async (req, res) => {
     try {
@@ -67,7 +87,7 @@ const addContact = async (req, res) => {
     }
 };
 
-const updateById = async (req, res) => {
+/* const updateById = async (req, res) => {
     try {
         const requiredFields = ['name', 'email', 'phone'];
         const missingFields = requiredFields.filter(field => !req.body || !req.body[field]);
@@ -97,9 +117,52 @@ const updateById = async (req, res) => {
     } catch (error) {
         res.status(404).json({ message: "Not found" });
     }
+}; */
+
+const updateById = async (req, res) => {
+    try {
+        const requiredFields = ['name', 'email', 'phone'];
+        const missingFields = requiredFields.filter(field => !req.body || !req.body[field]);
+
+        if (!req.body || missingFields.length === requiredFields.length) {
+            return res.status(400).json({ message: "Missing fields" });
+        }
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({ message: `Missing required ${missingFields} field` });
+        }
+
+        const { contactId } = req.params;
+
+        const contactToUpdate = await Contact.findById(contactId);
+        if (!contactToUpdate) {
+            return res.status(404).json({ message: "Not found" });
+        }
+
+        if (contactToUpdate.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Unauthorized access" });
+        }
+
+        const { error } = addSchema.validate(req.body);
+
+        if (error) {
+            return res.status(400).json({ message: "Existing value must be a string" });
+        }
+
+        const { name, email, phone } = req.body;
+        const updatedContact = await Contact.findByIdAndUpdate(contactId, { name, email, phone }, { new: true });
+
+        if (!updatedContact) {
+            return res.status(404).json({ message: "Not found" });
+        }
+        res.status(200).json(updatedContact);
+    } catch (error) {
+        res.status(404).json({ message: "Not found" });
+    }
 };
 
-const updateStatusContact = async (req, res) => {
+
+/* const updateStatusContact = async (req, res) => {
     try {
         if (!req.body || req.body.favorite === undefined) {
             return res.status(400).json({ message: "Missing field favorite" });
@@ -119,9 +182,44 @@ const updateStatusContact = async (req, res) => {
     } catch (error) {
         res.status(404).json({ message: "Not found" });
     }
+}; */
+
+const updateStatusContact = async (req, res) => {
+    try {
+        if (!req.body || req.body.favorite === undefined) {
+            return res.status(400).json({ message: "Missing field favorite" });
+        }
+
+        const { error } = favoriteSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ message: "Existing value must be a boolean" });
+        }
+
+        const { contactId } = req.params;
+
+        const contactToUpdate = await Contact.findById(contactId);
+        if (!contactToUpdate) {
+            return res.status(404).json({ message: "Not found" });
+        }
+
+        if (contactToUpdate.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Unauthorized access" });
+        }
+
+        const result = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
+
+        if (!result) {
+            return res.status(404).json({ message: "Not found" });
+        }
+
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(404).json({ message: "Not found" });
+    }
 };
 
-const removeContact = async (req, res) => {
+
+/* const removeContact = async (req, res) => {
     try {
         const { contactId } = req.params;
         const deleted = await Contact.findByIdAndDelete(contactId);
@@ -134,8 +232,32 @@ const removeContact = async (req, res) => {
     } catch (error) {
         res.status(404).json({ message: "Not found" });
     }
-};
+}; */
 
+const removeContact = async (req, res) => {
+    try {
+        const { contactId } = req.params;
+
+        const contactToRemove = await Contact.findById(contactId);
+        if (!contactToRemove) {
+            return res.status(404).json({ message: "Not found" });
+        }
+
+        if (contactToRemove.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Unauthorized access" });
+        }
+
+        const deleted = await Contact.findByIdAndDelete(contactId);
+
+        if (deleted) {
+            res.status(200).json({ message: "Contact deleted" });
+        } else {
+            res.status(404).json({ message: "Not found" });
+        }
+    } catch (error) {
+        res.status(404).json({ message: "Not found" });
+    }
+};
 
 module.exports = {
     listContacts,
