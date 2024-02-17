@@ -5,7 +5,7 @@ const {
 const path = require("path");
 const fs = require("fs/promises");
 const Jimp = require("jimp");
-const avatarDir = path.join(__dirname, "..", "..", "public", "avatars");
+const avatarDir = path.join(__dirname, "../../", "public", "avatars");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -67,6 +67,10 @@ const login = async (req, res) => {
 const updateAvatar = async (req, res) => {
     const { _id } = req.user;
 
+    if (!req.file) {
+        return res.status(400).json({ message: "No avatar provided" });
+    }
+
     const { path: tempUpload, originalname } = req.file;
     await Jimp.read(tempUpload).then((image) => {
         return image.resize(250, 250).write(`${tempUpload}`)
@@ -76,11 +80,11 @@ const updateAvatar = async (req, res) => {
     const resultUpload = path.join(avatarDir, filename);
     await fs.rename(tempUpload, resultUpload);
 
-    const avatarURL = path.join("avatars", originalname);
+    const avatarURL = path.join("avatars", filename);
     await User.findByIdAndUpdate(_id, { avatarURL });
 
     if (!avatarURL) {
-        res.status(401).json({ message: "Not authorized" });
+        res.status(404).json({ message: "Not found" });
     }
 
     res.status(200).json({
