@@ -7,6 +7,7 @@ const fs = require("fs/promises");
 const Jimp = require("jimp");
 const avatarDir = path.join(__dirname, "../../", "public", "avatars");
 
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const gravatar = require("gravatar");
