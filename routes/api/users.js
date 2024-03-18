@@ -27,17 +27,6 @@ router.post('/register', async (req, res, next) => {
     }
 }, register);
 
-router.get("/verify/:verificationCode", verifyEmail);
-
-router.post("/verify", async (req, res, next) => {
-    try {
-        await schemas.emailSchema.validateAsync(req.body);
-        next();
-    } catch (error) {
-        return res.status(400).json({ message: "Missing required field email" });
-    }
-}, resendVerifyEmail);
-
 router.post("/login", async (req, res, next) => {
     try {
         await schemas.loginSchema.validateAsync(req.body);
@@ -50,6 +39,17 @@ router.post("/login", async (req, res, next) => {
 router.post("/logout", authenticate, logout);
 
 router.get("/current", authenticate, getCurrent);
+
+router.get("/verify/:verificationToken", verifyEmail);
+
+router.post("/verify", async (req, res, next) => {
+    try {
+        await schemas.emailSchema.validateAsync(req.body);
+        next();
+    } catch (error) {
+        return res.status(400).json({ message: "Missing required field email" });
+    }
+}, resendVerifyEmail);
 
 router.patch("/avatars", authenticate, upload.single("avatar"), updateAvatar);
 
